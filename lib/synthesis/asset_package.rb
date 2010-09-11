@@ -159,8 +159,14 @@ module Synthesis
         # write out to a temp file
         File.open("#{tmp_path}_uncompressed.js", "w") {|f| f.write(source) }
       
+        begin
+          # compress file with Google Closure Compiler
+          `java -jar #{jsmin_path}/closure-compiler.jar --warning_level QUIET --js #{tmp_path}_uncompressed.js --js_output_file #{tmp_path}_compressed.js`
+          raise "oops" if !File::exists?("#{tmp_path}_compressed.js") || File.zero?("#{tmp_path}_compressed.js")
+        rescue
         # compress file with JSMin library
-        `ruby #{jsmin_path}/jsmin.rb <#{tmp_path}_uncompressed.js >#{tmp_path}_compressed.js \n`
+          `ruby #{jsmin_path}/jsmin.rb <#{tmp_path}_uncompressed.js >#{tmp_path}_compressed.js \n`
+        end
 
         # read it back in and trim it
         result = ""
@@ -174,13 +180,25 @@ module Synthesis
       end
   
       def compress_css(source)
-        source.gsub!(/\s+/, " ")           # collapse space
-        source.gsub!(/\/\*(.*?)\*\//, "")  # remove comments - caution, might want to remove this if using css hacks
-        source.gsub!(/\} /, "}\n")         # add line breaks
-        source.gsub!(/\n$/, "")            # remove last break
-        source.gsub!(/ \{ /, " {")         # trim inside brackets
-        source.gsub!(/; \}/, "}")          # trim inside brackets
-        source
+        yui_path = "#{Rails.root}/vendor/plugins/asset_packager/lib"
+        begin
+          result = ""
+          # compress file with YUI Compressor
+          IO.popen "java -jar #{yui_path}/yui-compressor.jar --type css 2>/dev/null", "r+" do |f|
+            f.write source
+            f.close_write
+            result = f.read
+          end
+          return result if $?.success?
+        rescue
+          source.gsub!(/\s+/, " ")           # collapse space
+          source.gsub!(/\/\*(.*?)\*\//, "")  # remove comments - caution, might want to remove this if using css hacks
+          source.gsub!(/\} /, "}\n")         # add line breaks
+          source.gsub!(/\n$/, "")            # remove last break
+          source.gsub!(/ \{ /, " {")         # trim inside brackets
+          source.gsub!(/; \}/, "}")          # trim inside brackets
+          source
+        end
       end
 
       def get_extension

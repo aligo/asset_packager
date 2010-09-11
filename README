@@ -25,9 +25,23 @@ This Rails Plugin was inspired by Cal Henderson's article
 "Serving JavaScript Fast" on Vitamin:
 http://www.thinkvitamin.com/features/webapps/serving-javascript-fast
 
-It also uses the Ruby JavaScript Minifier created by 
+It uses the Google Closure Compiler for JS using 
+SIMPLE_OPTIMIZATIONS compilation level
+http://code.google.com/closure/compiler/
+(Google Closure Compiler vs. YUI Compressor)
+http://www.bloggingdeveloper.com/post/Closure-Compiler-vs-YUI-Compressor-Comparing-the-Javascript-Compression-Tools.aspx
+(why not ADVANCED_OPTIMIZATIONS?)
+When using ADVANCED_OPTIMIZATIONS you must perform extra steps to preserve references to external symbols:http://code.google.com/intl/it/closure/compiler/docs/api-tutorial3.html
+If without extern file, it renames all variables, function names, and properties, and such as jQuery will get errors that $ isn't defined.
+So the official minified version of jQuery is actually compiled with SIMPLE_OPTIMIZATIONS:http://github.com/jquery/jquery/commit/3fd62eae9df3159fc238a515bb748140a942313d
+
+And the YUI Compressor for CSS
+http://developer.yahoo.com/yui/compressor/
+
+If Google Google Closure Compiler throws errors, uses the Ruby JavaScript Minifier created by 
 Douglas Crockford.
 http://www.crockford.com/javascript/jsmin.html
+
 
 == Key Features
 
@@ -44,6 +58,10 @@ http://www.crockford.com/javascript/jsmin.html
 
 == Updates
 
+September '10: by aligo
+* Rails 2.3.8 & Rails 3.0 compatibility fixes
+* Use Google Closure Compiler for JS & YUI Compressor for CSS, for even smaller file sizes
+
 November '08:
 * Rails 2.2 compatibility fixes
 * No more mucking with internal Rails functions, which means:
@@ -56,7 +74,7 @@ November '08:
 == How to Use:
 
 1. Download and install the plugin:
-   ./script/plugin install git://github.com/sbecker/asset_packager.git
+   rails plugin install git@github.com:aligo/asset_packager.git
 
 2. Run the rake task "asset:packager:create_yml" to generate the /config/asset_packages.yml
 file the first time. You will need to reorder files under 'base' so dependencies are loaded 
